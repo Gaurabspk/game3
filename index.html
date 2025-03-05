@@ -33,6 +33,36 @@
       font-size: 24px;
     }
 
+    /* Signup Form */
+    .signup-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .signup-form input {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .signup-form button {
+      padding: 10px;
+      font-size: 16px;
+      color: white;
+      background: #3498db;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .signup-form button:hover {
+      background: #2980b9;
+    }
+
     /* Game Board */
     .game-board {
       display: grid;
@@ -194,13 +224,22 @@
 <body>
   <div class="game-container">
     <h1>Memory Flip Puzzle</h1>
-    <div class="game-info">
+
+    <!-- Signup Form -->
+    <form class="signup-form" id="signup-form" action="https://formspree.io/f/xpwpawrd" method="POST">
+      <input type="text" name="name" id="name" placeholder="Enter your name" required>
+      <input type="email" name="email" id="email" placeholder="Enter your email" required>
+      <button type="submit">Start Game</button>
+    </form>
+
+    <!-- Game Board (Hidden Initially) -->
+    <div class="game-board" id="game-board" style="display: none;"></div>
+    <div class="game-info" id="game-info" style="display: none;">
       <div>Moves: <span id="move-counter">0</span></div>
       <div>Time: <span id="timer">0s</span></div>
       <div>Level: <span id="level">1</span></div>
     </div>
-    <div class="game-board"></div>
-    <button class="reset-button">Reset Game</button>
+    <button class="reset-button" id="reset-button" style="display: none;">Reset Game</button>
   </div>
 
   <!-- Footer -->
@@ -223,17 +262,27 @@
 
   <script>
     const gridSize = 4;
-    const gameBoard = document.querySelector('.game-board');
+    const gameBoard = document.getElementById('game-board');
     const moveCounter = document.getElementById('move-counter');
     const timerDisplay = document.getElementById('timer');
     const levelDisplay = document.getElementById('level');
-    const resetButton = document.querySelector('.reset-button');
+    const resetButton = document.getElementById('reset-button');
+    const signupForm = document.getElementById('signup-form');
     let moves = 0;
     let time = 0;
     let level = 1;
     let timer;
     let boardState = [];
     let flippedTiles = [];
+
+    // Show game board and hide signup form
+    function startGame() {
+      signupForm.style.display = 'none';
+      gameBoard.style.display = 'grid';
+      document.getElementById('game-info').style.display = 'flex';
+      resetButton.style.display = 'block';
+      initGame();
+    }
 
     // Initialize the game
     function initGame() {
@@ -333,10 +382,39 @@
       initGame();
     }
 
-    resetButton.addEventListener('click', resetGame);
+    // Handle signup form submission
+    signupForm.addEventListener('submit', (e) => {
+      e.preventDefault();
 
-    // Initialize the game on page load
-    initGame();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+
+      if (name && email) {
+        // Submit form data to Formspree
+        fetch(signupForm.action, {
+          method: 'POST',
+          body: new FormData(signupForm),
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
+        .then(response => {
+          if (response.ok) {
+            alert(`Welcome, ${name}! Let's play!`);
+            startGame();
+          } else {
+            alert('Form submission failed. Please try again.');
+          }
+        })
+        .catch(error => {
+          alert('Form submission failed. Please try again.');
+        });
+      } else {
+        alert('Please enter your name and email to start the game.');
+      }
+    });
+
+    resetButton.addEventListener('click', resetGame);
   </script>
 </body>
 </html>
