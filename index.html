@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Flip Puzzle</title>
+  <style>
+    /* General Styles */
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+      color: white;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .game-container {
+      text-align: center;
+      background: #3a3a5a;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      max-width: 100%;
+      width: 90%;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    /* Game Board */
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 80px);
+      grid-template-rows: repeat(4, 80px);
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    .tile {
+      background: #4a4a6a;
+      border: 2px solid #5a5a7a;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.3s ease, background 0.3s ease;
+      perspective: 1000px;
+    }
+
+    .tile .front,
+    .tile .back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 10px;
+    }
+
+    .tile .front {
+      background: #4a4a6a;
+      transform: rotateY(180deg);
+    }
+
+    .tile .back {
+      background: #3498db;
+      transform: rotateY(0deg);
+    }
+
+    .tile.flipped .front {
+      transform: rotateY(0deg);
+    }
+
+    .tile.flipped .back {
+      transform: rotateY(180deg);
+    }
+
+    .tile.matched {
+      background: #2ecc71;
+      cursor: default;
+    }
+
+    .tile.matched .front {
+      background: #2ecc71;
+    }
+
+    .tile:hover:not(.matched) {
+      transform: scale(1.05);
+    }
+
+    /* Game Info */
+    .game-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 18px;
+    }
+
+    /* Buttons */
+    .reset-button {
+      padding: 10px 20px;
+      font-size: 16px;
+      color: white;
+      background: #e74c3c;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .reset-button:hover {
+      background: #c0392b;
+    }
+
+    /* Footer Styles */
+    footer {
+      background: linear-gradient(135deg, #2c3e50, #34495e);
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+      border-top: 2px solid #1abc9c;
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .footer-content a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: color 0.3s ease, transform 0.3s ease;
+    }
+
+    .footer-content a:hover {
+      color: #1abc9c;
+      transform: translateY(-5px);
+    }
+
+    .footer-content a i {
+      font-size: 24px;
+    }
+
+    .footer-bottom {
+      margin-top: 20px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 500px) {
+      .game-board {
+        grid-template-columns: repeat(4, 60px);
+        grid-template-rows: repeat(4, 60px);
+      }
+
+      .tile {
+        font-size: 18px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .game-info {
+        font-size: 16px;
+      }
+    }
+  </style>
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="game-container">
+    <h1>Memory Flip Puzzle</h1>
+    <div class="game-info">
+      <div>Moves: <span id="move-counter">0</span></div>
+      <div>Time: <span id="timer">0s</span></div>
+      <div>Level: <span id="level">1</span></div>
+    </div>
+    <div class="game-board"></div>
+    <button class="reset-button">Reset Game</button>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <a href="https://www.facebook.com/gaurab.sapkota.142" target="_blank">
+        <i class="fab fa-facebook"></i> Facebook
+      </a>
+      <a href="https://www.instagram.com/gaurabspk/" target="_blank">
+        <i class="fab fa-instagram"></i> Instagram
+      </a>
+      <a href="mailto:gaurabpromo@gmail.com">
+        <i class="fas fa-envelope"></i> Email
+      </a>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2023 Gaurab Sapkota. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    const gridSize = 4;
+    const gameBoard = document.querySelector('.game-board');
+    const moveCounter = document.getElementById('move-counter');
+    const timerDisplay = document.getElementById('timer');
+    const levelDisplay = document.getElementById('level');
+    const resetButton = document.querySelector('.reset-button');
+    let moves = 0;
+    let time = 0;
+    let level = 1;
+    let timer;
+    let boardState = [];
+    let flippedTiles = [];
+
+    // Initialize the game
+    function initGame() {
+      generateBoard();
+      startTimer();
+      moves = 0;
+      moveCounter.textContent = moves;
+      levelDisplay.textContent = level;
+    }
+
+    // Generate the game board
+    function generateBoard() {
+      gameBoard.innerHTML = '';
+      boardState = [];
+      flippedTiles = [];
+
+      const symbols = ['🍎', '🍌', '🍇', '🍒', '🍉', '🍓', '🍑', '🍍'];
+      const pairs = [...symbols, ...symbols];
+      pairs.sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+        tile.innerHTML = `
+          <div class="front">${pairs[i]}</div>
+          <div class="back"></div>
+        `;
+        tile.addEventListener('click', () => handleTileClick(i));
+        gameBoard.appendChild(tile);
+        boardState.push(tile);
+      }
+    }
+
+    // Handle tile clicks
+    function handleTileClick(index) {
+      const tile = boardState[index];
+
+      if (tile.classList.contains('flipped') || flippedTiles.length === 2) return;
+
+      tile.classList.add('flipped');
+      flippedTiles.push(tile);
+
+      if (flippedTiles.length === 2) {
+        moves++;
+        moveCounter.textContent = moves;
+        checkMatch();
+      }
+    }
+
+    // Check if flipped tiles match
+    function checkMatch() {
+      const [tile1, tile2] = flippedTiles;
+
+      if (tile1.querySelector('.front').textContent === tile2.querySelector('.front').textContent) {
+        tile1.classList.add('matched');
+        tile2.classList.add('matched');
+        flippedTiles = [];
+
+        if (boardState.every((tile) => tile.classList.contains('matched'))) {
+          clearInterval(timer);
+          alert(`Congratulations! You completed Level ${level}!`);
+          level++;
+          levelDisplay.textContent = level;
+          initGame();
+        }
+      } else {
+        setTimeout(() => {
+          tile1.classList.remove('flipped');
+          tile2.classList.remove('flipped');
+          flippedTiles = [];
+        }, 1000);
+      }
+    }
+
+    // Start the timer
+    function startTimer() {
+      time = 0;
+      timerDisplay.textContent = `${time}s`;
+      clearInterval(timer);
+      timer = setInterval(() => {
+        time++;
+        timerDisplay.textContent = `${time}s`;
+
+        // Stop the game if time exceeds 1 minute (60 seconds)
+        if (time >= 60) {
+          clearInterval(timer);
+          alert("Time's up! Try again!");
+          resetGame();
+        }
+      }, 1000);
+    }
+
+    // Reset the game
+    function resetGame() {
+      clearInterval(timer);
+      level = 1;
+      initGame();
+    }
+
+    resetButton.addEventListener('click', resetGame);
+
+    // Initialize the game on page load
+    initGame();
+  </script>
+</body>
+</html>
